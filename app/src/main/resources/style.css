@@ -1,0 +1,73 @@
+/* 
+    Document   : style.css
+*/
+
+
+.menubar{
+	-fx-font-size: 14pt;
+    -fx-font-family: "Roboto";
+    -fx-base: rgb(255, 255, 255);
+    -fx-background: rgb(0, 0, 0);
+}
+
+.root{
+    -fx-font-size: 16pt;
+    -fx-font-family: "Courier New";
+    -fx-base: rgb(132, 145, 47);
+    -fx-background: rgb(225, 228, 203);
+}
+
+.button{
+    -fx-text-fill: rgb(49, 89, 23);
+    -fx-border-color: rgb(49, 89, 23);
+    -fx-border-radius: 5;
+    -fx-padding: 3 6 6 6;
+}
+
+.borders{
+    -fx-border-color: rgb(103, 100, 78);
+    -fx-border-style: dotted;
+    -fx-border-width: 1.5;
+    -fx-border-insets: -5;
+}
+
+.grid-pane {
+    -fx-padding: 5;
+    -fx-hgap: 1; /* Horizontal gap between cells */
+    -fx-vgap: 1; /* Vertical gap between cells */
+    -fx-border-color: black; /* Border color around the entire grid */
+    -fx-border-width: 2; /* Border width around the entire grid */
+}
+
+.grid-pane .text-field {
+    -fx-alignment: center;
+    -fx-font-size: 40;
+    -fx-font-family: "Courier New";
+    -fx-max-width: 80;
+    -fx-max-height: 80;
+    -fx-min-width: 80;
+    -fx-min-height: 80;
+    -fx-border-color: lightgray; /* Default light borders for all cells */
+    -fx-border-width: 0.5; /* Thinner borders within subgrids */
+}
+
+.grid-pane .right-border {
+    -fx-border-color: black;
+    -fx-border-width: 0 2 0 0; 
+}
+
+.grid-pane .bottom-border {
+    -fx-border-color: black; 
+    -fx-border-width: 0 0 2 0;
+}
+
+.grid-pane .bottom-right-border {
+    -fx-border-color: black; 
+    -fx-border-width: 0 2 2 0;
+}
+
+
+
+
+
+  
