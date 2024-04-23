@@ -2,7 +2,9 @@ package sudoku;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -11,6 +13,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
@@ -46,9 +49,13 @@ public class Sudoku extends Application
             {
                 textFields[row][col] = new TextField();
                 TextField textField = textFields[row][col];
+                //textField.getStyleClass().add("text-field");
+                
                 // setting ID so that we can look up the text field by row and col
+                // IDs are #3-4 for the 4th row and 5th column (start index at 0)
                 textField.setId(row + "-" + col);
                 gridPane.add(textField, col, row);
+                // using CSS to get the highlighting correct
                 if (row % 3 == 2 && col % 3 == 2)
                 {
                     textField.getStyleClass().add("bottom-right-border");
@@ -59,6 +66,37 @@ public class Sudoku extends Application
                 else if (row % 3 == 2) { // Thick bottom border
                     textField.getStyleClass().add("bottom-border");
                 }
+
+                // using a listener instead of a KEY_TYPED event handler
+                // KEY_TYPED requires the user to hit ENTER to trigger the event
+                textField.textProperty().addListener((observable, oldValue, newValue) -> {
+                    if (!newValue.matches("[1-9]?")) {
+                        // restrict textField to only accept single digit numbers from 1 to 9
+                        textField.setText(oldValue);
+                    }
+                    String id = textField.getId();
+                    String[] parts = id.split("-");
+                    int r = Integer.parseInt(parts[0]);
+                    int c = Integer.parseInt(parts[1]);
+                    
+                    if (newValue.length() > 0)
+                    {
+                        try
+                        {
+                            System.out.printf("Setting cell %d, %d to %s\n", r, c, newValue);
+                            int value = Integer.parseInt(newValue);
+                            board.setCell(r, c, value);
+                        }
+                        catch (NumberFormatException e)
+                        {
+                            // ignore; should never happen
+                        }
+                    }
+                    else
+                    {
+                        board.setCell(r, c, 0);
+                    }
+                });
             }
         }
 
@@ -101,14 +139,16 @@ public class Sudoku extends Application
         MenuBar menuBar = new MenuBar();
     	menuBar.getStyleClass().add("menubar");
 
+        //
+        // File Menu
+        //
     	Menu fileMenu = new Menu("File");
-        
-        // load from text
-        MenuItem loadText = new MenuItem("Load from text");
-    	loadText.setOnAction(event -> {
+
+        addMenuItem(fileMenu, "Load from text", () -> {
             System.out.println("Load from text");
             FileChooser fileChooser = new FileChooser();
             // XXX: this is a hack to get the file chooser to open in the right directory
+            // we should probably have a better way to find this folder than a hard coded path
 			fileChooser.setInitialDirectory(new File("../puzzles"));
 			File sudokuFile = fileChooser.showOpenDialog(primaryStage);
             if (sudokuFile != null)
@@ -120,6 +160,7 @@ public class Sudoku extends Application
                     updateBoard();
                 } catch (Exception e) {
                     // pop up and error window
+                    // TODO: better error message
                     Alert alert = new Alert(AlertType.ERROR);
     	            alert.setTitle("Unable to load from file");
     	            alert.setHeaderText("Unsaved changes detected!");
@@ -128,18 +169,94 @@ public class Sudoku extends Application
                 }
             }
         });
-        fileMenu.getItems().add(loadText);
 
         // save to text
-        MenuItem save = new MenuItem("Save");
-        save.setOnAction(event -> {
-            System.out.println("Save");
+        addMenuItem(fileMenu, "Save to text", () -> {
+            System.out.println("Save puzzle to text");
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setInitialDirectory(new File("../puzzles"));
+            File file = fileChooser.showSaveDialog(primaryStage);
+            if (file != null)
+            {
+                System.out.println("Selected file: " + file.getName());
+                try {
+                    //TODO: check if the file already exists, and ask the user if they want to overwrite
+                    writeToFile(file, board.toString());
+                } catch (Exception e) {
+                    Alert alert = new Alert(AlertType.ERROR);
+                    alert.setTitle("Unable to save to file");
+                    alert.setHeaderText("Unsaved changes detected!");
+                    alert.setContentText(e.getMessage());
+                    alert.showAndWait();
+                }
+            }
         });
-        fileMenu.getItems().add(save);
+        
+        addMenuItem(fileMenu, "Print Board", () -> {
+            // Debugging method that just prints the board
+            Alert alert = new Alert(AlertType.INFORMATION);
+            alert.setTitle("Board");
+            alert.setHeaderText(null);
+            alert.setContentText(board.toString());
+            alert.showAndWait();
+        });
+        // add a separator to the fileMenu
+        fileMenu.getItems().add(new SeparatorMenuItem());
+
+        addMenuItem(fileMenu, "Exit", () -> {
+            System.out.println("Exit");
+            primaryStage.close();
+        });
 
         menuBar.getMenus().add(fileMenu);
 
+        //
+        // Edit
+        //
+        Menu editMenu = new Menu("Edit");
+
+        addMenuItem(editMenu, "Undo", () -> {
+            System.out.println("Undo");
+            //TODO: Undo the last move
+        });
+
+        addMenuItem(editMenu, "Show moves", () -> {
+            System.out.println("Show all the moves we've made");
+            //TODO: pop up a window showing all of the values we've entered
+        });
+
+        menuBar.getMenus().add(editMenu);
+
+        //
+        // Hint Menu
+        //
+        Menu hintMenu = new Menu("Hints");
+
+        addMenuItem(hintMenu, "Show legal values", () -> {
+            System.out.println("Show legal values");
+            //TODO: list legal values when we click a cell
+        });
+
+        addMenuItem(hintMenu, "Show hint", () -> {
+            System.out.println("Show hint");
+            //TODO: highlight cell where only one legal value is possible
+        });
+
+        menuBar.getMenus().add(hintMenu);
+
         return menuBar;
+    }
+
+    private static void writeToFile(File file, String content) throws IOException
+    {
+        Files.write(file.toPath(), content.getBytes());
+    }
+
+    private void addMenuItem(Menu menu, String name, Runnable action)
+    {
+        MenuItem menuItem = new MenuItem(name);
+        menuItem.setOnAction(event -> action.run());
+        menu.getItems().add(menuItem);
     }
         
     public static void main(String[] args) 

@@ -25,15 +25,23 @@ public class Board
                 board.setCell(row, col, scanner.nextInt());
             }
         }
+        scanner.close();
         return board;
+    }
+
+    public boolean isLegal(int row, int col, int value)
+    {
+        // TODO: check if this is a legal value for the cell
+        // it should be between 1 and 9 but also be one of the possible values
+        // based on the other values in the row, column, and 3x3 square
+        return true;
     }
 
     public void setCell(int row, int col, int value)
     {
-        if (value > 0 && !getPossibleValues(row, col).contains(value))
-        {
-            throw new IllegalArgumentException(String.format("Invalid value %d for cell row=%d col=%d", value, row, col));
-        }
+        // TODO: throw exception if the value is not between 1 and 9
+        // TODO: throw exception if the value is not a possible value 
+        // based on other values in the sudoku grid
         board[row][col] = value;
     }
 
@@ -75,6 +83,24 @@ public class Board
             }
         }
         return possibleValues;
+    }
+
+    public String toString()
+    {
+        StringBuilder sb = new StringBuilder();
+        for (int row = 0; row < 9; row++)
+        {
+            for (int col = 0; col < 9; col++)
+            {
+                sb.append(getCell(row, col));
+                if (col < 8)
+                {
+                    sb.append(" ");
+                }
+            }
+            sb.append("\n");
+        }
+        return sb.toString();
     }
 
 }
