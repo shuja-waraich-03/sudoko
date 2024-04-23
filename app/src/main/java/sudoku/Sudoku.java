@@ -49,23 +49,63 @@ public class Sudoku extends Application
             {
                 textFields[row][col] = new TextField();
                 TextField textField = textFields[row][col];
-                //textField.getStyleClass().add("text-field");
                 
                 // setting ID so that we can look up the text field by row and col
                 // IDs are #3-4 for the 4th row and 5th column (start index at 0)
                 textField.setId(row + "-" + col);
                 gridPane.add(textField, col, row);
-                // using CSS to get the highlighting correct
+                // using CSS to get the darker borders correct
                 if (row % 3 == 2 && col % 3 == 2)
                 {
+                    // we need a special border to highlight the borrom right
                     textField.getStyleClass().add("bottom-right-border");
                 }
-                else if (col % 3 == 2) { // Thick right border
+                else if (col % 3 == 2) { 
+                    // Thick right border
                     textField.getStyleClass().add("right-border");
                 }
-                else if (row % 3 == 2) { // Thick bottom border
+                else if (row % 3 == 2) { 
+                    // Thick bottom border
                     textField.getStyleClass().add("bottom-border");
                 }
+
+                // add a handler for when we select a textfield
+                textField.setOnMouseClicked(event -> {
+                    // toggle highlighting
+                    if (textField.getStyleClass().contains("text-field-selected"))
+                    {
+                        // remove the highlight if we click on a selected cell
+                        textField.getStyleClass().remove("text-field-selected");
+                    }
+                    else
+                    {
+                        // otherwise 
+                        textField.getStyleClass().add("text-field-selected");
+                    }
+                });
+
+                // add a handler for when we lose focus on a textfield
+                textField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+                    if (!newValue)
+                    {
+                        // remove the highlight when we lose focus
+                        textField.getStyleClass().remove("text-field-selected");
+                    }
+                });
+
+
+                // add handler for when we right-click a textfield
+                // to bring up a selection of possible values
+                textField.setOnContextMenuRequested(event -> {
+                    // change the textfield background to red while keeping the rest of the css the same
+                    textField.getStyleClass().add("text-field-highlight");
+                    Alert alert = new Alert(AlertType.INFORMATION);
+                    alert.setTitle("Possible values");
+                    // TODO: show a list of possible values that can go in this square
+                    alert.setContentText("1 2 3 4 5 6 7 8 9");
+                    alert.showAndWait();
+                    textField.getStyleClass().remove("text-field-highlight");
+                });
 
                 // using a listener instead of a KEY_TYPED event handler
                 // KEY_TYPED requires the user to hit ENTER to trigger the event
@@ -86,6 +126,8 @@ public class Sudoku extends Application
                             System.out.printf("Setting cell %d, %d to %s\n", r, c, newValue);
                             int value = Integer.parseInt(newValue);
                             board.setCell(r, c, value);
+                            // remove the highlight when we set a value
+                            textField.getStyleClass().remove("text-field-selected");
                         }
                         catch (NumberFormatException e)
                         {
@@ -99,6 +141,30 @@ public class Sudoku extends Application
                 });
             }
         }
+
+        // add key listener to the root node to grab ESC keys
+        root.setOnKeyPressed(event -> {
+            System.out.println("Key pressed: " + event.getCode());
+            switch (event.getCode())
+            {
+                // check for the ESC key
+                case ESCAPE:
+                    // clear all the selected text fields
+                    for (int row = 0; row < SIZE; row++)
+                    {
+                        for (int col = 0; col < SIZE; col++)
+                        {
+                            TextField textField = textFields[row][col];
+                            textField.getStyleClass().remove("text-field-selected");
+                        }
+                    }
+                    break;
+                default:
+                    System.out.println("you typed key: " + event.getCode());
+                    break;
+                
+            }
+        });
 
         Scene scene = new Scene(root, width, height);
 
@@ -144,8 +210,8 @@ public class Sudoku extends Application
         //
     	Menu fileMenu = new Menu("File");
 
-        addMenuItem(fileMenu, "Load from text", () -> {
-            System.out.println("Load from text");
+        addMenuItem(fileMenu, "Load from file", () -> {
+            System.out.println("Load from file");
             FileChooser fileChooser = new FileChooser();
             // XXX: this is a hack to get the file chooser to open in the right directory
             // we should probably have a better way to find this folder than a hard coded path
@@ -162,8 +228,8 @@ public class Sudoku extends Application
                     // pop up and error window
                     // TODO: better error message
                     Alert alert = new Alert(AlertType.ERROR);
-    	            alert.setTitle("Unable to load from file");
-    	            alert.setHeaderText("Unsaved changes detected!");
+    	            alert.setTitle("Unable to load sudoku board from file "+ sudokuFile.getName());
+    	            alert.setHeaderText(e.getMessage());
                     alert.setContentText(e.getMessage());
                     alert.showAndWait();
                 }

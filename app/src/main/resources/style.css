@@ -49,6 +49,15 @@
     -fx-border-width: 0.5; /* Thinner borders within subgrids */
 }
 
+.text-field-selected {
+    -fx-background-color: rgb(147, 155, 221);
+}
+
+.text-field-highlight {
+    -fx-background-color: rgb(238, 148, 148);
+}
+
+
 .grid-pane .right-border {
     -fx-border-color: black;
     -fx-border-width: 0 2 0 0;
