@@ -93,8 +93,8 @@ public class Sudoku extends Application
                     }
                 });
 
-
-                // add handler for when we right-click a textfield
+                // RIGHT-CLICK handler
+                // add handler for when we RIGHT-CLICK a textfield
                 // to bring up a selection of possible values
                 textField.setOnContextMenuRequested(event -> {
                     // change the textfield background to red while keeping the rest of the css the same
@@ -132,6 +132,11 @@ public class Sudoku extends Application
                         catch (NumberFormatException e)
                         {
                             // ignore; should never happen
+                        }
+                        catch (Exception e)
+                        {
+                            // TODO: if the value is not a possible value, catch the exception and show an alert
+                            System.out.println("Invalid Value: " + newValue);
                         }
                     }
                     else
@@ -222,11 +227,11 @@ public class Sudoku extends Application
                 System.out.println("Selected file: " + sudokuFile.getName());
                 
                 try {
+                    //TODO: loadBoard() method should throw an exception if the file is not a valid sudoku board
                     board = Board.loadBoard(new FileInputStream(sudokuFile));
                     updateBoard();
                 } catch (Exception e) {
                     // pop up and error window
-                    // TODO: better error message
                     Alert alert = new Alert(AlertType.ERROR);
     	            alert.setTitle("Unable to load sudoku board from file "+ sudokuFile.getName());
     	            alert.setHeaderText(e.getMessage());
@@ -286,8 +291,8 @@ public class Sudoku extends Application
             //TODO: Undo the last move
         });
 
-        addMenuItem(editMenu, "Show moves", () -> {
-            System.out.println("Show all the moves we've made");
+        addMenuItem(editMenu, "Show values entered", () -> {
+            System.out.println("Show all the values we've entered since we loaded the board");
             //TODO: pop up a window showing all of the values we've entered
         });
 
@@ -297,11 +302,6 @@ public class Sudoku extends Application
         // Hint Menu
         //
         Menu hintMenu = new Menu("Hints");
-
-        addMenuItem(hintMenu, "Show legal values", () -> {
-            System.out.println("Show legal values");
-            //TODO: list legal values when we click a cell
-        });
 
         addMenuItem(hintMenu, "Show hint", () -> {
             System.out.println("Show hint");

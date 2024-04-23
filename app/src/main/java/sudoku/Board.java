@@ -31,16 +31,19 @@ public class Board
 
     public boolean isLegal(int row, int col, int value)
     {
-        // TODO: check if this is a legal value for the cell
-        // it should be between 1 and 9 but also be one of the possible values
-        // based on the other values in the row, column, and 3x3 square
-        return true;
+        return value >= 1 && value <= 9 && getPossibleValues(row, col).contains(value);
     }
 
     public void setCell(int row, int col, int value)
     {
-        // TODO: throw exception if the value is not between 1 and 9
-        // TODO: throw exception if the value is not a possible value 
+        if (value < 0 || value > 9)
+        {
+            throw new IllegalArgumentException("Value must be between 1 and 9 (or 0 to reset a value)");
+        }
+        if (!getPossibleValues(row, col).contains(value))
+        {
+            throw new IllegalArgumentException("Value " + value + " is not possible for this cell");
+        }
         // based on other values in the sudoku grid
         board[row][col] = value;
     }
