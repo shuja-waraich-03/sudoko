@@ -4,7 +4,7 @@ plugins {
     id 'org.openjfx.javafxplugin' version '0.0.13'
 }
 
-group 'edu.knox.cder.testy'
+group 'knox.sudoku'
 version '0.0.1'
 
 repositories {
