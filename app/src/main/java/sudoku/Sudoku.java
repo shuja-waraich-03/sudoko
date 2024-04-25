@@ -236,6 +236,9 @@ public class Sudoku extends Application
     	            alert.setTitle("Unable to load sudoku board from file "+ sudokuFile.getName());
     	            alert.setHeaderText(e.getMessage());
                     alert.setContentText(e.getMessage());
+                    e.printStackTrace();
+                    if (e.getCause() != null) e.getCause().printStackTrace();
+                    
                     alert.showAndWait();
                 }
             }

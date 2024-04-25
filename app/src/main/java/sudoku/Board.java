@@ -40,7 +40,7 @@ public class Board
         {
             throw new IllegalArgumentException("Value must be between 1 and 9 (or 0 to reset a value)");
         }
-        if (!getPossibleValues(row, col).contains(value))
+        if (value != 0 && !getPossibleValues(row, col).contains(value))
         {
             throw new IllegalArgumentException("Value " + value + " is not possible for this cell");
         }
