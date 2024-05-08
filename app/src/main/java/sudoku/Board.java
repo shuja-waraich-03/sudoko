@@ -4,6 +4,8 @@ import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.NoSuchElementException;
+import java.util.InputMismatchException;
 
 public class Board
 {
@@ -14,20 +16,72 @@ public class Board
         board = new int[9][9];
     }
 
-    public static Board loadBoard(InputStream in)
-    {
-        Board board = new Board();
-        Scanner scanner = new Scanner(in);
-        for (int row = 0; row < 9; row++)
-        {
-            for (int col = 0; col < 9; col++)
-            {
-                board.setCell(row, col, scanner.nextInt());
+    // public static Board loadBoard(InputStream in)
+    // {
+    //     Board board = new Board();
+    //     Scanner scanner = new Scanner(in);
+    //     for (int row = 0; row < 9; row++)
+    //     {
+    //         for (int col = 0; col < 9; col++)
+    //         {
+    //             board.setCell(row, col, scanner.nextInt());
+    //         }
+    //     }
+    //     scanner.close();
+    //     return board;
+    // }
+
+    // public static Board loadBoard(InputStream in) throws IllegalArgumentException {
+    //     Board tempBoard = new Board();
+    //     Scanner scanner = new Scanner(in);
+        
+        // for (int row = 0; row < 9; row++) {
+        //     for (int col = 0; col < 9; col++) {
+        //         int value = scanner.nextInt();  // This could throw InputMismatchException if the next token is not an integer
+        //         if (value < 0 || value > 9) {
+        //             throw new IllegalArgumentException("Each number must be between 0 and 9.");
+        //         }
+        //         // Before placing the value, check if it is possible at the current cell
+        //         if (value != 0) {
+        //             Set<Integer> possibleValues = tempBoard.getPossibleValues(row, col);
+        //             if (!possibleValues.contains(value)) {
+        //                 throw new IllegalArgumentException("Value " + value + " at (" + row + ", " + col + ") violates Sudoku rules.");
+        //             }
+        //         }
+        //         // Directly set the value in the board after validation
+        //         tempBoard.board[row][col] = value;
+        //     }
+        // }
+        public static Board loadBoard(InputStream in) throws IllegalArgumentException {
+            Board Board = new Board();
+            Scanner scanner = new Scanner(in);
+            try {
+                for (int row = 0; row < 9; row++) {
+                    for (int col = 0; col < 9; col++) {
+                        int value = scanner.nextInt();  // Read the next integer from the input
+                        if (value < 0 || value > 9) {
+                            throw new IllegalArgumentException("Each number must be between 0 and 9.");
+                        }
+                        // Check if the value is possible at the current cell
+                        if (value != 0) {
+                            Set<Integer> possibleValues = Board.getPossibleValues(row, col);
+                            if (!possibleValues.contains(value)) {
+                                throw new IllegalArgumentException("Value " + value + " at (" + row + ", " + col + ") violates Sudoku rules.");
+                            }
+                        }
+                        // Set the value in the board directly after validation
+                        Board.board[row][col] = value;
+                     }
+                }
             }
+
+            catch (NoSuchElementException e) {
+                throw new IllegalArgumentException("Input stream does not contain enough data for a 9x9 Sudoku board.", e);
+            }
+                    scanner.close();
+            return Board;
         }
-        scanner.close();
-        return board;
-    }
+
 
     public boolean isLegal(int row, int col, int value)
     {

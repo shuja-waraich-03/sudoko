@@ -6,10 +6,13 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 
+import com.google.common.base.Optional;
+
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -19,6 +22,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import java.util.Stack;
 
 public class Sudoku extends Application
 {
@@ -28,6 +32,9 @@ public class Sudoku extends Application
     private TextField[][] textFields = new TextField[SIZE][SIZE];
     private int width = 800;
     private int height = 800;
+
+    private Stack<int[]> moveHistory = new Stack<>();
+
 
     @Override
     public void start(Stage primaryStage) throws Exception
@@ -109,41 +116,70 @@ public class Sudoku extends Application
 
                 // using a listener instead of a KEY_TYPED event handler
                 // KEY_TYPED requires the user to hit ENTER to trigger the event
+                // textField.textProperty().addListener((observable, oldValue, newValue) -> {
+                //     if (!newValue.matches("[1-9]?")) {
+                //         // restrict textField to only accept single digit numbers from 1 to 9
+                //         textField.setText(oldValue);
+                //     }
+                //     String id = textField.getId();
+                //     String[] parts = id.split("-");
+                //     int r = Integer.parseInt(parts[0]);
+                //     int c = Integer.parseInt(parts[1]);
+                    
+                //     if (newValue.length() > 0)
+                //     {
+                //         try
+                //         {
+                //             System.out.printf("Setting cell %d, %d to %s\n", r, c, newValue);
+                //             int value = Integer.parseInt(newValue);
+                //             board.setCell(r, c, value);
+                //             // remove the highlight when we set a value
+                //             textField.getStyleClass().remove("text-field-selected");
+                //         }
+                //         catch (NumberFormatException e)
+                //         {
+                //             // ignore; should never happen
+                //         }
+                //         catch (Exception e)
+                //         {
+                //             // TODO: if the value is not a possible value, catch the exception and show an alert
+                //             System.out.println("Invalid Value: " + newValue);
+                //         }
+                //     }
+                //     else
+                //     {
+                //         board.setCell(r, c, 0);
+                //     }
+                // });
                 textField.textProperty().addListener((observable, oldValue, newValue) -> {
                     if (!newValue.matches("[1-9]?")) {
-                        // restrict textField to only accept single digit numbers from 1 to 9
                         textField.setText(oldValue);
-                    }
-                    String id = textField.getId();
-                    String[] parts = id.split("-");
-                    int r = Integer.parseInt(parts[0]);
-                    int c = Integer.parseInt(parts[1]);
-                    
-                    if (newValue.length() > 0)
-                    {
-                        try
-                        {
-                            System.out.printf("Setting cell %d, %d to %s\n", r, c, newValue);
-                            int value = Integer.parseInt(newValue);
-                            board.setCell(r, c, value);
-                            // remove the highlight when we set a value
-                            textField.getStyleClass().remove("text-field-selected");
+                    } else {
+                        String id = textField.getId();
+                        String[] parts = id.split("-");
+                        int r = Integer.parseInt(parts[0]);
+                        int c = Integer.parseInt(parts[1]);
+                
+                        if (!oldValue.equals(newValue) && newValue.length() > 0) {
+                            try {
+                                int oldValueNum = oldValue.isEmpty() ? 0 : Integer.parseInt(oldValue);
+                                int newValueNum = Integer.parseInt(newValue);
+                                board.setCell(r, c, newValueNum);
+                                moveHistory.push(new int[]{r, c, oldValueNum, newValueNum}); // Store both the old and new values
+                                textField.getStyleClass().remove("text-field-selected");
+                            } catch (NumberFormatException e) {
+                                // ignore; should never happen
+                            } catch (Exception e) {
+                                System.out.println("Invalid Value: " + newValue);
+                            }
+                        } else if (newValue.isEmpty()) {
+                            board.setCell(r, c, 0);
+                            moveHistory.push(new int[]{r, c, oldValue.isEmpty() ? 0 : Integer.parseInt(oldValue), 0});
                         }
-                        catch (NumberFormatException e)
-                        {
-                            // ignore; should never happen
-                        }
-                        catch (Exception e)
-                        {
-                            // TODO: if the value is not a possible value, catch the exception and show an alert
-                            System.out.println("Invalid Value: " + newValue);
-                        }
-                    }
-                    else
-                    {
-                        board.setCell(r, c, 0);
                     }
                 });
+                
+                
             }
         }
 
@@ -254,10 +290,21 @@ public class Sudoku extends Application
             {
                 System.out.println("Selected file: " + file.getName());
                 try {
-                    //TODO: check if the file already exists, and ask the user if they want to overwrite
-                    writeToFile(file, board.toString());
+                // Check if the file already exists and prompt for confirmation to overwrite
+                if (file.exists()) {
+                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                    alert.setTitle("Confirm Overwrite");
+                    alert.setHeaderText("File already exists");
+                    alert.setContentText("Do you want to overwrite the existing file?");
+                    java.util.Optional<ButtonType> result = alert.showAndWait();
+                    if (result.isPresent() && result.get() != ButtonType.OK) {
+                        return; // If user does not confirm, return without writing
+                    }
+                }
+                // Proceed with writing to the file
+                writeToFile(file, board.toString());
                 } catch (Exception e) {
-                    Alert alert = new Alert(AlertType.ERROR);
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
                     alert.setTitle("Unable to save to file");
                     alert.setHeaderText("Unsaved changes detected!");
                     alert.setContentText(e.getMessage());
@@ -289,15 +336,41 @@ public class Sudoku extends Application
         //
         Menu editMenu = new Menu("Edit");
 
+        // addMenuItem(editMenu, "Undo", () -> {
+        //     System.out.println("Undo");
+        //     //TODO: Undo the last move
+        // });
+
+        //need clarification for this, how is undo supposed to work, should it just undo 1 move or keep undoing until the board is back to the original state
         addMenuItem(editMenu, "Undo", () -> {
-            System.out.println("Undo");
-            //TODO: Undo the last move
+            if (!moveHistory.isEmpty()) {
+                int[] lastMove = moveHistory.pop();
+                int r = lastMove[0];
+                int c = lastMove[1];
+                int value = lastMove[2];
+                board.setCell(r, c, value);
+                textFields[r][c].setText(value > 0 ? Integer.toString(value) : "");
+            }
         });
+        
+
+        // addMenuItem(editMenu, "Show values entered", () -> {
+        //     System.out.println("Show all the values we've entered since we loaded the board");
+        //     //TODO: pop up a window showing all of the values we've entered
+        // });
 
         addMenuItem(editMenu, "Show values entered", () -> {
-            System.out.println("Show all the values we've entered since we loaded the board");
-            //TODO: pop up a window showing all of the values we've entered
+            StringBuilder sb = new StringBuilder("All changes:\n");
+            for (int[] move : moveHistory) {
+                sb.append(String.format("Cell [%d, %d] changed from %d to %d\n", move[0], move[1], move[2], move[3]));
+            }
+            Alert alert = new Alert(AlertType.INFORMATION);
+            alert.setTitle("Values Entered");
+            alert.setContentText(sb.toString());
+            alert.showAndWait();
         });
+        
+        
 
         menuBar.getMenus().add(editMenu);
 
